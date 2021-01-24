@@ -25,16 +25,16 @@ commands:
           name: Migration Rollback
           when: on_fail
           command: |
-            last_migration_op=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" \
+            SUCCESS=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" \
             --request GET https://api.memstash.io/values/migration-${CIRCLE_WORKFLOW_ID})
             # migration status value 
-            echo ${last_migration_op}
-            IF [[ $last_migration_op = 1 ]]
-            THEN
+            echo $SUCCESS
+            if(( $SUCCESS==1 )); 
+            then
               cd backend
               npm install
               npm run migrations:revert
-            FI
+            fi
 
 jobs:
   build-frontend:
