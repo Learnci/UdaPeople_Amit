@@ -1,1 +1,14 @@
-example
+-- GIT Repo
+url1= https://github.com/Learnaws2019/UdaPeople_Amit
+
+-- S3 Bucket
+url2=  
+
+-- CloudFront url
+url3= 
+
+-- back-end server in EC2
+url4= 
+
+-- Prometheus 
+url5= 
