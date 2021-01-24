@@ -237,8 +237,8 @@ jobs:
             # Your code here
             cd backend
             npm run migrations > migrationResult.txt
-          no_output_timeout: 20m
-          cat migrationResult.txt
+            cat migrationResult.txt
+          no_output_timeout: 20m         
 
       - run:
           name: Send migration results to memstash
