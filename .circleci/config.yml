@@ -4,11 +4,20 @@ commands:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     steps:
       - run:
-          name: Destroy environments
+          name: rollback environments
           when: on_fail
           command: |
             aws cloudformation delete-stack --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:8}
             aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:8}
+      - run:
+              name: S3 bucket and objects rollback
+              when: on_fail
+              command: |
+                # deleting objects
+                aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --recursive 
+                # deleting bucket
+                aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --force
+
 jobs:
   build-frontend:
     docker:
@@ -122,6 +131,9 @@ jobs:
       # Checkout code from git
       - checkout 
       - run:
+          command: |
+            yum -y install tar gzip
+      - run:
           name: Ensure backend infrastructure exists
           command: |
             aws cloudformation deploy \
@@ -156,7 +168,36 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure  
+      # rollback on failure  
+      - destroy-environment
+
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+       - add_ssh_keys:
+          fingerprints: ["5a:0a:bf:60:7b:04:c8:c8:2e:80:d7:95:de:94:1d:de"]
+      # attach workspace
+      - attach_workspace:
+          at: /tmp/.circleci/ansible
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache python3 py3-pip \
+            && pip3 install --upgrade pip \
+            && pip3 install awscli \
+            && rm -rf /var/cache/apk/*
+            apk add --update ansible
+      - run:
+          name: Configure server
+          command: |
+            ansible-playbook -i /tmp/.circleci/ansible/inventory.txt \
+            .circleci/ansible/configure-server.yml
+      # rollback on failure      
       - destroy-environment
 
 workflows:
@@ -174,6 +215,11 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [master]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
           filters:
             branches:
               only: [master]
