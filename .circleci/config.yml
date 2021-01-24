@@ -1,5 +1,14 @@
 version: 2.1
-
+commands:
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:8}
+            aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:8}
 jobs:
   build-frontend:
     docker:
@@ -104,6 +113,51 @@ jobs:
             npm install
             # npm audit --audit-level=critical
             npm audit fix --audit-level=critical --force
+
+  deploy-infrastructure:
+    docker:
+      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli:latest
+    steps:
+      # Checkout code from git
+      - checkout 
+      - run:
+          name: Ensure backend infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --tags project="udapeople" \
+              --stack-name backend-${CIRCLE_WORKFLOW_ID:0:8} \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:8}"   
+              
+      - run:
+          name: Ensure frontend infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project="udapeople" \
+              --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:8} \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:8}"  
+
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            ip=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:project,Values=udapeople" \
+              --output text) 
+            
+            echo "$ip" >> .circleci/ansible/inventory.txt
+            echo "$ip"
+            curl -H "Content-Type: text/plain" -H "token: IP-${CIRCLE_WORKFLOW_ID:0:8}" \
+            --request PUT \
+            --data "$ip" https://api.memstash.io/values/IP
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      # Here's where you will add some code to rollback on failure  
+      - destroy-environment
 
 workflows:
   default:
