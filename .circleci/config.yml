@@ -12,7 +12,7 @@ jobs:
           name: Build front-end
           command: |
             cd frontend
-            npm install npm@latest -g
+            sudo npm install npm@latest -g
             npm run build
             exit 1
       - save_cache:
@@ -30,7 +30,7 @@ jobs:
           name: Back-end build
           command: |
              cd backend
-             npm install npm@latest -g
+             sudo npm install npm@latest -g
              npm run build
              exit 1
       - save_cache:
