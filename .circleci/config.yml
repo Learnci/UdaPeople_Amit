@@ -10,13 +10,32 @@ commands:
             aws cloudformation delete-stack --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:8}
             aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:8}
       - run:
-              name: S3 bucket and objects rollback
-              when: on_fail
-              command: |
-                # deleting objects
-                aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --recursive 
-                # deleting bucket
-                aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --force
+          name: S3 bucket and objects rollback
+          when: on_fail
+          command: |
+            # deleting objects
+            aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --recursive 
+            # deleting bucket
+            aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --force
+
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.   
+    steps:
+      - run:
+          name: Migration Rollback
+          when: on_fail
+          command: |
+            last_migration_op=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" \
+            --request GET https://api.memstash.io/values/migration-${CIRCLE_WORKFLOW_ID})
+            # migration status value 
+            echo ${last_migration_op}
+
+            IF(( $last_migration_op==1 )) 
+            THEN
+              cd backend
+              npm install
+              npm run migrations:revert
+            FI
 
 jobs:
   build-frontend:
@@ -31,7 +50,7 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm run build         
+            npm run build
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -46,13 +65,13 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             cd backend
-             npm install
-             npm run build 
+            cd backend
+            npm install
+            npm run build
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
-            
+
   test-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -69,7 +88,7 @@ jobs:
             cd frontend
             npm install
             npm run test
-                
+
   test-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -79,16 +98,16 @@ jobs:
       # Restore from cache
       - restore_cache:
           keys: [backend-build]
-      # backend job code here 
+      # backend job code here
       - run:
           name: backend Test
           command: |
             cd backend
             npm install
-            npm run test           
+            npm run test
   scan-frontend:
     docker:
-      # Docker image 
+      # Docker image
       - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
@@ -106,7 +125,7 @@ jobs:
 
   scan-backend:
     docker:
-      # Docker image 
+      # Docker image
       - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
@@ -129,7 +148,7 @@ jobs:
       - image: amazon/aws-cli:latest
     steps:
       # Checkout code from git
-      - checkout 
+      - checkout
       - run:
           command: |
             yum -y install tar gzip
@@ -140,8 +159,8 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --tags project="udapeople" \
               --stack-name backend-${CIRCLE_WORKFLOW_ID:0:8} \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:8}"   
-              
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:8}"
+
       - run:
           name: Ensure frontend infrastructure exist
           command: |
@@ -149,7 +168,7 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --tags project="udapeople" \
               --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:8} \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:8}"  
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:8}"
 
       - run:
           name: Add back-end ip to ansible inventory
@@ -158,7 +177,7 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=udapeople" \
               --output text) 
-            
+
             echo "$ip" >> .circleci/ansible/inventory.txt
             echo "$ip"
             curl -H "Content-Type: text/plain" -H "token: IP-${CIRCLE_WORKFLOW_ID:0:8}" \
@@ -168,7 +187,7 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # rollback on failure  
+      # rollback on failure
       - destroy-environment
 
   configure-infrastructure:
@@ -197,9 +216,86 @@ jobs:
           command: |
             ansible-playbook -i /tmp/.circleci/ansible/inventory.txt \
             .circleci/ansible/configure-server.yml
-      # rollback on failure      
+      # rollback on failure
       - destroy-environment
+  run-migrations:
+    docker:
+      # Docker image here that supports NodeJS
+      - image: circleci/node:13.8.0
+    steps:
+      # Checkout code from git
+      - checkout 
+      - run:
+          name: awscli install
+          command: |
+            sudo apt-get -y -qq update
+            sudo apt-get -qq install awscli
+            sudo apt-get -y -qq install python3
+      - run:
+          name: Run migrations
+          command: |
+            # Your code here
+            cd backend
+            npm run migrations > migrationResult.txt
+          no_output_timeout: 20m
+          cat migrationResult.txt
 
+      - run:
+          name: Send migration results to memstash
+          command: |
+            command: |
+            echo "checking last Migration status..."
+            IF grep -i "has been executed successfully" migrationResult.txt
+            THEN             
+              curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+			  
+			        echo "Last migration request completed, a success indicator (1) has been saved into memstash"
+            ELSE
+              curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+			  
+			        echo "Last migration request failed, a failure indicator (0) has been saved into memstash"
+            FI
+     # rollback on failure  
+      - revert-migrations
+      - destroy-environment    
+
+  deploy-frontend:
+    docker:
+      # Docker image here that supports AWS CLI
+    steps:
+      # Checkout code from git
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Get backend url
+          command: |
+            # your code here
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+      - run:
+          name: Deploy frontend objects
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure      
+                    
+  deploy-backend:
+    docker:
+      # Docker image here that supports Ansible
+    steps:
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Deploy backend
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure  
 workflows:
   default:
     jobs:
@@ -210,7 +306,7 @@ workflows:
       - test-backend:
           requires: [build-backend]
       - scan-backend:
-          requires: [build-backend]          
+          requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
       - deploy-infrastructure:
@@ -223,3 +319,9 @@ workflows:
           filters:
             branches:
               only: [master]
+      - run-migrations:
+          requires: [configure-infrastructure]
+          filters:
+            branches:
+              only: [master]
+
