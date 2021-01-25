@@ -236,16 +236,16 @@ jobs:
           command: |
             # Your code here
             cd backend
-            echo -e " ENVIROMENT=production \n
-                      TYPEORM_CONNECTION=$TYPEORM_CONNECTION \n
-                      TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR \n
-                      TYPEORM_ENTITIES=$TYPEORM_ENTITIES \n
-                      TYPEORM_MIGRATIONS=TYPEORM_MIGRATIONS \n
-                      TYPEORM_HOST=$TYPEORM_HOST \n
-                      TYPEORM_PORT=$TYPEORM_PORT \n
-                      TYPEORM_USERNAME=$TYPEORM_USERNAME \n
-                      TYPEORM_PASSWORD=$TYPEORM_PASSWORD \n
-                      TYPEORM_DATABASE=$TYPEORM_DATABASE > "backend/.env"
+            echo -e " ENVIROMENT=production\n
+                      TYPEORM_CONNECTION=$TYPEORM_CONNECTION\n
+                      TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR\n
+                      TYPEORM_ENTITIES=$TYPEORM_ENTITIES\n
+                      TYPEORM_MIGRATIONS=TYPEORM_MIGRATIONS\n
+                      TYPEORM_HOST=$TYPEORM_HOST\n
+                      TYPEORM_PORT=$TYPEORM_PORT\n
+                      TYPEORM_USERNAME=$TYPEORM_USERNAME\n
+                      TYPEORM_PASSWORD=$TYPEORM_PASSWORD\n
+                      TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > backend/.env
 
             cat backend/.env
             npm install
