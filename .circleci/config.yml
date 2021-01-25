@@ -236,8 +236,7 @@ jobs:
           command: |
             # Your code here
             cd backend
-            echo -e " ENVIROMENT=production\n
-                      TYPEORM_CONNECTION=$TYPEORM_CONNECTION\n
+            echo -e " TYPEORM_CONNECTION=$TYPEORM_CONNECTION\n
                       TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR\n
                       TYPEORM_ENTITIES=$TYPEORM_ENTITIES\n
                       TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS\n
@@ -245,7 +244,8 @@ jobs:
                       TYPEORM_PORT=$TYPEORM_PORT\n
                       TYPEORM_USERNAME=$TYPEORM_USERNAME\n
                       TYPEORM_PASSWORD=$TYPEORM_PASSWORD\n
-                      TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > .env
+                      TYPEORM_DATABASE=$TYPEORM_DATABASE\n
+                      ENVIROMENT=production\n" > .env
 
             cat .env
             npm install
@@ -273,8 +273,7 @@ jobs:
           when: on_fail
           command: |
             cat /home/circleci/.npm/_logs/*-debug.log
-            ls -la
-            cat backend/migration.txt      
+            ls -la   
      # rollback on failure  
       - revert-migrations
       - destroy-environment  
