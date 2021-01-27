@@ -247,7 +247,8 @@ jobs:
                       TYPEORM_PORT=$TYPEORM_PORT\n
                       TYPEORM_USERNAME=$TYPEORM_USERNAME\n
                       TYPEORM_PASSWORD=$TYPEORM_PASSWORD\n
-                      TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > ./backend/.env
+                      TYPEORM_DATABASE=$TYPEORM_DATABASE\n
+                      NODE_ENV=production" > ./backend/.env
 
             cat ./backend/.env
             cd backend
@@ -258,7 +259,7 @@ jobs:
 
             echo "Here is migration file data :"
             cat migrationResult.txt
-          no_output_timeout: 20m         
+          #no_output_timeout: 20m         
 
       - run:
           name: Send migration results to memstash
