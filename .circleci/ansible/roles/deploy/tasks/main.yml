@@ -14,15 +14,19 @@
     printenv
     npm install
     npm run prestart:prod
+
+
 - name: "build package"
   shell: |
     cd /home/ubuntu/backend
     npm run build
     npm audit fix --audit-level=critical
+
 - name: "run migrations again"
   shell: |
     cd /home/ubuntu/backend
     npm run migrations
+
 - name: Executing node
   become: true
   shell: |

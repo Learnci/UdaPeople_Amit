@@ -22,6 +22,7 @@ Resources:
           ToPort: 3030
           CidrIp: 0.0.0.0/0
 
+
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -31,10 +32,7 @@ Resources:
       KeyName: udacity # If you use another key pair name, you should change this value to match.
       # If this ami id is not available for you, you can find another (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html)
       # Ubuntu 18 or higher works fine
-      # Amazon Linux 2 AMI (HVM), SSD Volume Type - ami-0a0ad6b70e61be944 (64-bit x86)
-      # ImageId: ami-0a0ad6b70e61be944 
-      #Ubuntu Server 18.04 LTS (HVM), SSD Volume Type - ami-0dd9f0e7df0f0a138 (64-bit x86)
-      ImageId: ami-0dd9f0e7df0f0a138
+      ImageId: ami-01f398167e3bba7a0
       Tags:
         - Key: Name
           Value: !Sub backend-${ID}

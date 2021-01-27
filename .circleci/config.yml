@@ -434,7 +434,7 @@ workflows:
             branches:
               only: [master]
       - smoke-test:
-          requires: [configure-infrastructure]
+          requires: [deploy-frontend, deploy-backend ]
           filters:
             branches:
               only: [master]
