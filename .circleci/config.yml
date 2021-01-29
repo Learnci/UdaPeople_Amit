@@ -5,19 +5,20 @@ commands:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     steps:
       - run:
-          name: rollback environments
-          when: on_fail
-          command: |
-            #aws cloudformation delete-stack --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:7}
-            aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:7}
-      - run:
           name: S3 bucket and objects rollback
           when: on_fail
           command: |
             # deleting objects
-            #aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive 
+            aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive 
             # deleting bucket
-            #aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
+            aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
+       - run:
+          name: rollback environments
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:7}
+            
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.   
     steps:
@@ -35,6 +36,7 @@ commands:
               npm install
               npm run migrations:revert
             fi
+
 jobs:
   build-frontend:
     docker:
@@ -255,14 +257,20 @@ jobs:
           command: |
             command: |
             echo "checking last Migration status..."
-            IF grep -i "has been executed successfully" migrationResult.txt
-            THEN             
+            if grep "No migrations are pending" migrationResult.txt
+            then             
               curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}			  
               echo "Last migration request completed, a success indicator (1) has been saved into memstash"
-            ELSE
+            fi
+            echo "checking last Migration status..."
+            if grep "has been executed successfully" migrationResult.txt
+            then             
+              curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}			  
+              echo "Last migration request completed, a success indicator (1) has been saved into memstash"
+            else
               curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}			  
               echo "Last migration request failed, a failure indicator (0) has been saved into memstash"
-            FI
+            fi
       - run:
           name: LogOnFail
           when: on_fail
