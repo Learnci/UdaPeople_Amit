@@ -1,5 +1,6 @@
 version: 2.1
-
+orbs:
+  aws-cli: circleci/aws-cli@1.3.1
 commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -48,12 +49,9 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            # cd frontend
-            # npm install
-            # npm run build
-            cd backend
-            npm install
-            npm run migrations:revert
+             cd frontend
+             npm install
+             npm run build            
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -240,7 +238,7 @@ jobs:
                       TYPEORM_MIGRATIONS=./src/migrations/*.ts\n
                       TYPEORM_HOST=database-1.c7v5fkkmgj4o.us-east-2.rds.amazonaws.com\n
                       TYPEORM_PORT=5432\n
-                      TYPEORM_USERNAME=postgres\n
+                      TYPEORM_USERNAME=$TYPEORM_USERNAME\n
                       TYPEORM_PASSWORD=$YPEORM_PASSWORD\n
                       TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > .env
             #cat /home/circleci/project/backend/node_modules/pg/lib/connection.js
@@ -335,8 +333,10 @@ jobs:
           fingerprints: ["5a:0a:bf:60:7b:04:c8:c8:2e:80:d7:95:de:94:1d:de"]
       # attach workspace
       - attach_workspace:
-          at: /tmp/.circleci/ansible
-      
+          at: .circleci/ansible/
+      - store_artifacts: 
+          path: .circleci/ansible/inventory
+          destination: artifact-file
       - run:
           name: Install dependencies
           command: |
@@ -345,14 +345,37 @@ jobs:
             ansible --version
             apk add --update tar gzip curl
             apk add --update openssh-client
+            pip install awscli
       - run:
           name: Deploy backend
           command: |
             # your code here
-            ANSIBLE_HOST_KEY_CHECKING=False \
-            ansible-playbook -i /tmp/.circleci/ansible/inventory.txt \
-            .circleci/ansible/deploy-backend.yml
-          no_output_timeout: 15m
+            cd backend
+            echo -e " ENVIROMENT=production \n
+                      TYPEORM_CONNECTION=postgres\n
+                      TYPEORM_MIGRATIONS_DIR=./src/migrations\n
+                      TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts\n
+                      TYPEORM_MIGRATIONS=./src/migrations/*.ts\n
+                      TYPEORM_HOST=database-1.c7v5fkkmgj4o.us-east-2.rds.amazonaws.com\n
+                      TYPEORM_PORT=5432\n
+                      TYPEORM_USERNAME=$TYPEORM_USERNAME\n
+                      TYPEORM_PASSWORD=$YPEORM_PASSWORD\n
+                      TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > .env
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            pwd
+            ls -la        
+            ansible-playbook -i ~/project/inventory deploy-backend.yml
+      - amazonservices
+      - run: cat .circleci/ansible/inventory
+      - run:
+          name: Deploy backend
+          no_output_timeout: 60m
+          command: |
+            cat .circleci/ansible/inventory
+            printenv >> ./backend/.env
+            cat ./backend/.env
+            ansible-playbook -i .circleci/ansible/inventory .circleci/ansible/deploy-backend.yml
       # rollback on failure 
       - revert-migrations
       - destroy-environment
@@ -363,11 +386,15 @@ jobs:
     steps:
       # Checkout code from git
       - checkout 
+      - amazonservices
+      - attach_workspace:
+          at: .circleci/ansible/
       - run:
           name: Install dependencies
           command: |
             # your code here
-            apk add --update tar gzip curl
+            # apk add --update tar gzip curl
+            apk add --update tar gzip ansible nodejs npm curl jq
       - run:
           name: Backend smoke test.
           command: |
