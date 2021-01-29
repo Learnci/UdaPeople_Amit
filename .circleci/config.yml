@@ -255,15 +255,17 @@ jobs:
       - run:
           name: Send migration results to memstash
           command: |
-            command: |
             echo "checking last Migration status..."
-            if grep "No migrations are pending" migrationResult.txt
+            if grep "has been executed successfully" migrationResult.txt
             then             
               curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}			  
               echo "Last migration request completed, a success indicator (1) has been saved into memstash"
+            else
+              curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}			  
+              echo "Last migration request failed, a failure indicator (0) has been saved into memstash"
             fi
-            echo "checking last Migration status..."
-            if grep "has been executed successfully" migrationResult.txt
+            echo "checking last Migration2 status..."
+            if grep "No migrations are pending" migrationResult.txt
             then             
               curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}			  
               echo "Last migration request completed, a success indicator (1) has been saved into memstash"
