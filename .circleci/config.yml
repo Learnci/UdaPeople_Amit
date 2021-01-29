@@ -8,16 +8,16 @@ commands:
           name: rollback environments
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:8}
-            aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:8}
+            #aws cloudformation delete-stack --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: S3 bucket and objects rollback
           when: on_fail
           command: |
             # deleting objects
-            aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --recursive 
+            #aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive 
             # deleting bucket
-            aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --force
+            #aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.   
     steps:
@@ -153,16 +153,16 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project="udapeople" \
-              --stack-name backend-${CIRCLE_WORKFLOW_ID:0:8} \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:8}"
+              --stack-name backend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Ensure frontend infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project="udapeople" \
-              --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:8} \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:8}"
+              --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
@@ -172,7 +172,7 @@ jobs:
               --output text) 
             echo "$ip" >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
-            curl -H "Content-Type: text/plain" -H "token: IP-${CIRCLE_WORKFLOW_ID:0:8}" \
+            curl -H "Content-Type: text/plain" -H "token: IP-${CIRCLE_WORKFLOW_ID:0:7}" \
             --request PUT \
             --data "$ip" https://api.memstash.io/values/IP
       - persist_to_workspace:
@@ -238,7 +238,7 @@ jobs:
                       TYPEORM_USERNAME=postgres\n
                       TYPEORM_PASSWORD=mypwd1234\n
                       TYPEORM_DATABASE=udapeople\n" > .env
-            cat /home/circleci/project/backend/node_modules/pg/lib/connection.js
+            #cat /home/circleci/project/backend/node_modules/pg/lib/connection.js
             echo "-----------------------------------"
             echo "-----------------------------------"
             cat .env
@@ -305,7 +305,7 @@ jobs:
             npm install
             npm run build
             ls ./dist
-            aws s3 cp ./dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:8} --recursive
+            aws s3 cp ./dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       # rollback on failure      
       - revert-migrations
       - destroy-environment
@@ -359,7 +359,7 @@ jobs:
           name: Backend smoke test.
           command: |
             # your code here
-            BACKEND_IP=$(curl -H "token: IP-${CIRCLE_WORKFLOW_ID:0:8}" \
+            BACKEND_IP=$(curl -H "token: IP-${CIRCLE_WORKFLOW_ID:0:7}" \
                         --request GET https://api.memstash.io/values/IP)
             URL="http://$BACKEND_IP:3030/api/status"
             echo $URL
@@ -411,12 +411,12 @@ workflows:
             branches:
               only: [master]
       - deploy-frontend:
-          requires: [configure-infrastructure]
+          requires: [run-migrations]
           filters:
             branches:
               only: [master]
       - deploy-backend:
-          requires: [configure-infrastructure]
+          requires: [run-migrations]
           filters:
             branches:
               only: [master]
