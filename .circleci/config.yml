@@ -366,7 +366,7 @@ jobs:
             pwd
             ls -la        
             ansible-playbook -i ~/project/inventory deploy-backend.yml
-      - amazonservices
+ 
       - run: cat .circleci/ansible/inventory
       - run:
           name: Deploy backend
@@ -386,7 +386,7 @@ jobs:
     steps:
       # Checkout code from git
       - checkout 
-      - amazonservices
+
       - attach_workspace:
           at: .circleci/ansible/
       - run:
