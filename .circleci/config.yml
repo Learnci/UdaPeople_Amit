@@ -236,8 +236,8 @@ jobs:
                       TYPEORM_HOST=database-1.c7v5fkkmgj4o.us-east-2.rds.amazonaws.com\n
                       TYPEORM_PORT=5432\n
                       TYPEORM_USERNAME=postgres\n
-                      TYPEORM_PASSWORD=mypwd1234\n
-                      TYPEORM_DATABASE=udapeople\n" > .env
+                      TYPEORM_PASSWORD=$YPEORM_PASSWORD\n
+                      TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > .env
             #cat /home/circleci/project/backend/node_modules/pg/lib/connection.js
             echo "-----------------------------------"
             echo "-----------------------------------"
