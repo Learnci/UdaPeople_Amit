@@ -390,17 +390,13 @@ workflows:
             branches:
               only: [master]
       - deploy-frontend:
-          requires: [configure-infrastructure]
+          requires: [run-migrations]
           filters:
             branches:
               only: [master]
       - deploy-backend:
-          requires: [configure-infrastructure]
+          requires: [run-migrations]
           filters:
             branches:
               only: [master]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
-          filters:
-            branches:
-              only: [master]
+      
