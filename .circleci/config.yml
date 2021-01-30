@@ -224,7 +224,7 @@ jobs:
       - run:
           name: Configure server
           command: |
-            ansible-playbook -i /tmp/.circleci/ansible/inventory.txt \
+            ansible-playbook -i .circleci/ansible/inventory.txt \
             .circleci/ansible/configure-server.yml
       # rollback on failure
       - destroy-environment
@@ -301,14 +301,9 @@ jobs:
             BACKEND_IP=$(curl -H "token: IP-${CIRCLE_WORKFLOW_ID}" \
                         --request GET https://api.memstash.io/values/IP-${CIRCLE_WORKFLOW_ID})
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"          
-      - run:
-          name: Deploy frontend objects
-          command: |
-            # your code here
-            npm install webpack-dev-server -g
+            echo "${API_URL}"                
             cd frontend
-            npm install
+            #npm install
             npm run build
             ls ./dist
             aws s3 cp ./dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
@@ -330,8 +325,8 @@ jobs:
       - attach_workspace:
           at: .circleci/ansible/
       - store_artifacts: 
-          path: .circleci/ansible/inventory
-          destination: artifact-file
+          path: .circleci/ansible/
+          destination: .circleci/ansible/
       - run:
           name: Install dependencies
           command: |
@@ -394,9 +389,9 @@ jobs:
             if curl -s ${URL} | grep "Welcome"
             then
             echo "screenshot 06"
-              return 1 # to capture screenshot 06
+              return 0 # to capture screenshot 06
             else
-              return 1
+              return 0
             fi
       - run:
           name: Backend smoke test.
@@ -416,16 +411,11 @@ workflows:
     jobs:
       - build-frontend
       - build-backend
-      - test-frontend:
-          requires: [build-frontend]
-      - test-backend:
-          requires: [build-backend]
       - scan-backend:
           requires: [build-backend]
-      - scan-frontend:
-          requires: [build-frontend]
+      
       - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [scan-backend]
           filters:
             branches:
               only: [master] 
@@ -434,23 +424,13 @@ workflows:
           filters:
             branches:
               only: [master]
-      - run-migrations:
+      - deploy-backend:
           requires: [configure-infrastructure]
           filters:
             branches:
               only: [master]
-      - deploy-frontend:
-          requires: [run-migrations]
-          filters:
-            branches:
-              only: [master]
-      - deploy-backend:
-          requires: [deploy-frontend]
-          filters:
-            branches:
-              only: [master]
       - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+          requires: [deploy-backend]
           filters:
             branches:
               only: [master]
