@@ -45,12 +45,12 @@ commands:
             
             # migration status value 
             echo "value retrurn from memstash is : " $SUCCESS
-            #if(( $SUCCESS==1 )) 
-            #then
-            cd backend
-            npm install
-            npm run migrations:revert
-            #fi
+            if(( $SUCCESS==1 )) 
+            then
+             cd backend
+             npm install
+             npm run migrations:revert
+            fi
 
 jobs:
   build-frontend:
@@ -68,7 +68,7 @@ jobs:
              npm run build            
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build-new
+          key: frontend-build-new2
 
   build-backend:
     docker:
@@ -83,10 +83,9 @@ jobs:
             cd backend            
             npm install
             npm run build
-            npm run migrations:revert
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build-new
+          key: backend-build-new2
 
   test-frontend:
     docker:
@@ -96,7 +95,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-new]
+          keys: [frontend-build-new2]
       # job code here
       - run:
           name: frontend Test
@@ -112,7 +111,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-new]
+          keys: [backend-build-new2]
       # backend job code here
       - run:
           name: backend Test
@@ -129,7 +128,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build]
+          keys: [frontend-build2]
       # Your job code here
       - run:
           name: frontend Test
@@ -146,7 +145,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build]
+          keys: [backend-build2]
       # Your job code here
       - run:
           name: backend Test
@@ -343,27 +342,17 @@ jobs:
             apk add --update openssh-client
             pip install awscli
       - run:
-          name: Deploy backend
+          name: Compress Backend
           command: |
-            # your code here
-            echo -e " ENVIROMENT=production \n
-                      TYPEORM_CONNECTION=postgres\n
-                      TYPEORM_MIGRATIONS_DIR=./src/migrations\n
-                      TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts\n
-                      TYPEORM_MIGRATIONS=./src/migrations/*.ts\n
-                      TYPEORM_HOST=database-1.c7v5fkkmgj4o.us-east-2.rds.amazonaws.com\n
-                      TYPEORM_PORT=5432\n
-                      TYPEORM_USERNAME=$TYPEORM_USERNAME\n
-                      TYPEORM_PASSWORD=$YPEORM_PASSWORD\n
-                      TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > backend/.env
             tar -C backend -czvf artifact.tar.gz .
-            cd .circleci/ansible
-            pwd
-            ls -la 
+            ls -la
+      - run:
+          name: Deploy Backend
+          command: |
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i project/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+      
             echo "file ip"
-            cat project/.circleci/ansible/inventory.txt
-            ansible-playbook -i project/.circleci/ansible/inventory.txt deploy-backend.yml
-            
+            cat project/.circleci/ansible/inventory.txt           
             
       # rollback on failure 
       - revert-migrations
