@@ -352,6 +352,7 @@ jobs:
                       TYPEORM_USERNAME=$TYPEORM_USERNAME\n
                       TYPEORM_PASSWORD=$YPEORM_PASSWORD\n
                       TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > backend/.env
+            cd backend
             npm i
             npm run build
             echo "List of contents before deleting: "
@@ -422,11 +423,9 @@ workflows:
     jobs:
       - build-frontend
       - build-backend
-      - scan-backend:
-          requires: [build-backend]
       
       - deploy-infrastructure:
-          requires: [scan-backend, build-frontend]
+          requires: [ build-frontend, build-backend]
           filters:
             branches:
               only: [master] 
