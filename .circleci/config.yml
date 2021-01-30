@@ -189,6 +189,7 @@ jobs:
               --filters "Name=tag:project,Values=udapeople" \
               --output text) 
             echo "$ip" >> .circleci/ansible/inventory.txt
+            pwd
             cat .circleci/ansible/inventory.txt
             curl -H "Content-Type: text/plain" -H "token: IP-${CIRCLE_WORKFLOW_ID}" \
             --request PUT \
@@ -212,7 +213,10 @@ jobs:
           fingerprints: ["5a:0a:bf:60:7b:04:c8:c8:2e:80:d7:95:de:94:1d:de"]
       # attach workspace
       - attach_workspace:
-          at: .circleci/ansible
+          at: .circleci/ansible/
+      - store_artifacts: 
+          path: .circleci/ansible/
+          destination: .circleci/ansible/
       - run:
           name: Install dependencies
           command: |
@@ -224,8 +228,10 @@ jobs:
       - run:
           name: Configure server
           command: |
-            ansible-playbook -i .circleci/ansible/inventory.txt \
-            .circleci/ansible/configure-server.yml
+            cd .circleci/ansible
+            pwd
+            cat project/.circleci/ansible/inventory.txt
+            ansible-playbook -i project/.circleci/ansible/inventory.txt configure-server.yml
       # rollback on failure
       - destroy-environment
   run-migrations:
@@ -355,8 +361,8 @@ jobs:
             pwd
             ls -la 
             echo "file ip"
-            cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml
+            cat project/.circleci/ansible/inventory.txt
+            ansible-playbook -i project/.circleci/ansible/inventory.txt deploy-backend.yml
             
             
       # rollback on failure 
@@ -415,7 +421,7 @@ workflows:
           requires: [build-backend]
       
       - deploy-infrastructure:
-          requires: [scan-backend]
+          requires: [scan-backend, build-frontend]
           filters:
             branches:
               only: [master] 
