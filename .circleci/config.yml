@@ -352,7 +352,7 @@ jobs:
             ls -la .circleci/ansible
             echo "file ip"
             cat .circleci/ansible/inventory.txt 
-            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml                  
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/project/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml                  
             
       # rollback on failure 
       - revert-migrations
