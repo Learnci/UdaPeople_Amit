@@ -349,10 +349,10 @@ jobs:
       - run:
           name: Deploy Backend
           command: |
-            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i project/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-      
+            ls -la .circleci/ansible
             echo "file ip"
-            cat project/.circleci/ansible/inventory.txt           
+            cat .circleci/ansible/inventory.txt 
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml                  
             
       # rollback on failure 
       - revert-migrations
