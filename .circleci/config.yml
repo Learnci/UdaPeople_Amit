@@ -15,6 +15,7 @@ commands:
             else
              echo "AWS CLI already installed"
             fi
+            
       - run:
           name: S3 objects rollback
           when: on_fail
