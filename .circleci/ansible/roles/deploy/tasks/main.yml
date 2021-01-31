@@ -15,16 +15,16 @@
   become: true
   copy:
     src: /root/project/backend
-    dest: /home/ubuntu
+    dest: /home/ubuntu/backend
 
 - name: Install Node Dependencies
   shell: |
     cd /home/ubuntu/backend
-    #npm install
+    sudo npm install
 - name: Building backend service
   shell: |
     cd /home/ubuntu/backend
-    npm run build
+    sudo npm run build
 - name: Running backend service
   shell: |
     cd /home/ubuntu/backend    
