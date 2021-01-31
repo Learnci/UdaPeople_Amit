@@ -27,7 +27,7 @@
   shell: |
     cd /home/ubuntu/backend
     sudo npm run build
-    sudio npm audit fix --audit-level=critical
+    sudo npm audit fix --audit-level=critical
 - name: Running backend service
   shell: |
     cd /home/ubuntu/backend    
