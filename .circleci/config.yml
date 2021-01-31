@@ -355,14 +355,7 @@ jobs:
             cd backend
             npm i
             npm run build
-            echo "List of contents before deleting: "
-            ls -a
-            echo "----------------------------------------"
-            rm -rf node_modules 
-            rm -rf dist
-            rm -rf test
-            rm README.md 
-            echo "List of files and dirs that will be sent to ansible: "
+            
             ls -a
             echo "----------------------------------------"
             cd ..
@@ -372,8 +365,8 @@ jobs:
             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/project/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml                  
             
       # rollback on failure 
-      - revert-migrations
-      - destroy-environment
+      #- revert-migrations
+      #- destroy-environment
   smoke-test:
     docker:
       # Lightweight Docker image 
