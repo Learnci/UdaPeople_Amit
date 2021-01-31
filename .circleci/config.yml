@@ -340,7 +340,7 @@ jobs:
             pip install awscli
       - run:
           name: Deploy Backend
-          no_output_timeout: 30m
+          no_output_timeout: 10m
           command: |
             echo -e " ENVIROMENT=production \n
                       TYPEORM_CONNECTION=postgres\n
@@ -354,8 +354,8 @@ jobs:
                       TYPEORM_DATABASE=$TYPEORM_DATABASE\n" > backend/.env
             tar -C backend -czvf artifact.tar.gz .
             cd backend
-            npm i
-            npm run build
+            #npm i
+            #npm run build
             
             ls -a
             echo "----------------------------------------"
