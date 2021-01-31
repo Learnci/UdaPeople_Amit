@@ -211,8 +211,8 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt main.yml
-       - revert-migration      
-       - auto-destruct-env
+      - revert-migration      
+      - auto-destruct-env
 
   run-migrations:
     docker:
@@ -304,8 +304,8 @@ jobs:
             else
               exit 1
             fi
-       - revert-migration
-       - auto-destruct-env
+      - revert-migration
+      - auto-destruct-env
                       
   deploy-cloudfront-and-cleanup:
     docker:
