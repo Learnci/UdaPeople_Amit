@@ -197,7 +197,7 @@ jobs:
             apk add --no-cache --upgrade bash
             pip install awscli
       - add_ssh_keys:
-          fingerprints: ["e4:2f:5d:5c:a4:b1:75:f5:ab:7f:82:b4:0a:2d:94:99"]
+          fingerprints: ["5a:0a:bf:60:7b:04:c8:c8:2e:80:d7:95:de:94:1d:de"]
       - attach_workspace:
           at: ~/
       - run:
@@ -211,8 +211,8 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt main.yml
-      - revert-migration      
-      - auto-destruct-env
+      #- revert-migration      
+      #- auto-destruct-env
 
   run-migrations:
     docker:
@@ -319,7 +319,7 @@ jobs:
             apk add --update bash
             pip install awscli
       - add_ssh_keys:
-          fingerprints: ["e4:2f:5d:5c:a4:b1:75:f5:ab:7f:82:b4:0a:2d:94:99"]
+          fingerprints: ["5a:0a:bf:60:7b:04:c8:c8:2e:80:d7:95:de:94:1d:de"]
       - run:
           name: Update cloudfront distribution
           command: |
