@@ -211,8 +211,8 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt main.yml
-      #- revert-migration      
-      #- auto-destruct-env
+       - revert-migration      
+       - auto-destruct-env
 
   run-migrations:
     docker:
@@ -297,15 +297,15 @@ jobs:
           name: Smoke test frontend
           command: |
             pwd
-            APP_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employee"
+            APP_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-2.amazonaws.com/#/employees"
             if curl -s ${APP_URL} | grep "Welcome"
             then
               exit 0
             else
               exit 1
             fi
-      #- revert-migration
-      #- auto-destruct-env
+       - revert-migration
+       - auto-destruct-env
                       
   deploy-cloudfront-and-cleanup:
     docker:
@@ -356,11 +356,17 @@ workflows:
   udapeople:
     jobs:
       - build-frontend
-      - build-backend      
-      - scan-backend:
+      - build-backend 
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
           requires: [build-backend]
+      - scan-frontend:
+          requires: [test-frontend]
+      - scan-backend:
+          requires: [test-backend]
       - deploy-infra:
-          requires: [scan-backend]
+          requires: [scan-frontend, scan-backend]
           filters:
             branches:
               only:
